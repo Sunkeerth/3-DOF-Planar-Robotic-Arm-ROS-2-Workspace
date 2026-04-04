@@ -1,9 +1,22 @@
+# ROS2 build/install/log
 build/
-log/
 install/
-*.pyc
+log/
+
+# Python cache
 __pycache__/
+*.pyc
+
+# Generated files from rqt_tf_tree etc.
 *.gv
 *.pdf
-*.png
+frames_*.gv
+frames_*.pdf
+
+# VS Code / IDE
 .vscode/
+.idea/
+
+# Misc
+*.swp
+*~
