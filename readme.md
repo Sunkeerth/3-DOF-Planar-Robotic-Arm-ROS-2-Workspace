@@ -39,6 +39,9 @@ ros2_ws/
 ```
 
 ---
+# 3-DOF Planar Robotic Arm — ROS 2 Workspace
+
+![Real 3-DOF Planar Robotic Arm](roboticarm_real_draw.png)
 
 ## Prerequisites
 
