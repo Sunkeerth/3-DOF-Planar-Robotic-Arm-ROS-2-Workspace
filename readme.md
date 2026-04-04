@@ -143,6 +143,10 @@ evince frames.pdf
 
 ## Task 2 — Forward Kinematics Node
 
+![FK output at 0° (terminal screenshot)](images/task2.png)
+
+## Task 2 — Forward Kinematics Node
+
 ### Run (standalone)
 
 ```bash
@@ -178,6 +182,10 @@ z: 0.0
 | 0° | 90°| 0° | 0.4000+0.0+0.2×cos(90°) = 0.4000 | 0.5000 |
 
 ---
+
+## Task 3 — Inverse Kinematics Service
+
+![IK test client output](images/arm_task3.png) 
 
 ## Task 3 — Inverse Kinematics Service
 
