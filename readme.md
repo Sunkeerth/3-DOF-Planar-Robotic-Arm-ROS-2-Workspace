@@ -86,6 +86,11 @@ source install/setup.bash
 > **Tip:** Run `source install/setup.bash` in every new terminal before using `ros2` commands from this workspace.
 
 ---
+## Task 1 — URDF Modelling
+
+![RViz display of the 3-DOF planar arm](images/arm_image01.png)
+
+![TF tree showing base_link → ... → end_effector](images/task01_terminal.png))
 
 ## Task 1 — URDF Modelling
 
