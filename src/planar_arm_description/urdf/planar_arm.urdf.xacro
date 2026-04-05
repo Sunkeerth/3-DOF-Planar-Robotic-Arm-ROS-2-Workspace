@@ -1,18 +1,42 @@
 <?xml version="1.0"?>
+<!--
+  planar_arm.urdf.xacro
+  ======================
+  Xacro (XML macro) description of a 3‑DOF planar robotic arm.
+  When processed by the 'xacro' command, it generates a plain URDF file.
+  The URDF is then used by:
+    - robot_state_publisher → to compute transforms (TF) of all links.
+    - RViz → to visualise the 3D model.
+    - (optional) Gazebo or other simulators for physics.
+-->
+
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="planar_arm">
 
-  <!-- ========== PARAMETERS ========== -->
-  <xacro:property name="L1"        value="0.4"/>
-  <xacro:property name="L2"        value="0.3"/>
-  <xacro:property name="L3"        value="0.2"/>
-  <xacro:property name="W"         value="0.04"/>
-  <xacro:property name="H"         value="0.04"/>
-  <xacro:property name="joint_lim" value="3.14159"/>
-  <xacro:property name="mass_link1" value="0.5"/>
-  <xacro:property name="mass_link2" value="0.3"/>
-  <xacro:property name="mass_link3" value="0.15"/>
+  <!-- ================================================================ -->
+  <!--  PARAMETERS (constants)                                          -->
+  <!-- ================================================================ -->
+  <!-- These are like variables. You can change one number here and    -->
+  <!-- it updates everywhere else (e.g., all link lengths).            -->
+  <xacro:property name="L1"        value="0.4"/>   <!-- Length of link 1 (0.4 m) -->
+  <xacro:property name="L2"        value="0.3"/>   <!-- Length of link 2 (0.3 m) -->
+  <xacro:property name="L3"        value="0.2"/>   <!-- Length of link 3 (0.2 m) -->
+  <xacro:property name="W"         value="0.04"/>  <!-- Width of each arm beam (0.04 m) -->
+  <xacro:property name="H"         value="0.04"/>  <!-- Height of each arm beam (0.04 m) -->
+  <xacro:property name="joint_lim" value="3.14159"/> <!-- Joint limit in radians (180°) – not used directly, kept for reference -->
+  <xacro:property name="mass_link1" value="0.5"/>   <!-- Mass of link 1 (kg) -->
+  <xacro:property name="mass_link2" value="0.3"/>   <!-- Mass of link 2 (kg) -->
+  <xacro:property name="mass_link3" value="0.15"/>  <!-- Mass of link 3 (kg) -->
 
-  <!-- ========== MACRO: INERTIA BOX ========== -->
+  <!-- ================================================================ -->
+  <!--  MACROS – reusable chunks of XML                                 -->
+  <!-- ================================================================ -->
+  
+  <!-- MACRO: box_inertia                                                -->
+  <!-- Creates an inertial block (mass + inertia matrix) for a box shape. -->
+  <!-- Parameters:                                                       -->
+  <!--   m = mass (kg)                                                   -->
+  <!--   x, y, z = dimensions of the box (m)                             -->
+  <!-- The inertia formulas are standard for a rectangular solid.        -->
   <xacro:macro name="box_inertia" params="m x y z">
     <inertial>
       <mass value="${m}"/>
@@ -23,7 +47,9 @@
     </inertial>
   </xacro:macro>
 
-  <!-- ========== MACRO: CYLINDER INERTIA ========== -->
+  <!-- MACRO: cylinder_inertia                                            -->
+  <!-- Creates an inertial block for a cylinder shape.                   -->
+  <!-- Parameters: m = mass, r = radius, h = height (length).            -->
   <xacro:macro name="cylinder_inertia" params="m r h">
     <inertial>
       <mass value="${m}"/>
@@ -34,7 +60,10 @@
     </inertial>
   </xacro:macro>
 
-  <!-- ========== MATERIALS ========== -->
+  <!-- ================================================================ -->
+  <!--  MATERIALS – colours used for visual parts                       -->
+  <!-- ================================================================ -->
+  <!-- Each material has an RGBA colour (red, green, blue, alpha/opacity). -->
   <material name="dark_grey">  <color rgba="0.25 0.25 0.28 1.0"/> </material>
   <material name="steel_grey"> <color rgba="0.50 0.52 0.55 1.0"/> </material>
   <material name="blue">       <color rgba="0.05 0.40 0.80 1.0"/> </material>
@@ -45,90 +74,97 @@
   <material name="black">      <color rgba="0.10 0.10 0.10 1.0"/> </material>
   <material name="white">      <color rgba="0.95 0.95 0.95 1.0"/> </material>
 
-  <!-- ========================================= -->
-  <!--               BASE LINK                   -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  BASE LINK – fixed base of the robot                             -->
+  <!-- ================================================================ -->
+  <!-- The base_link is the root frame. Everything else moves relative  -->
+  <!-- to it. In RViz, you can set the fixed frame to base_link.        -->
   <link name="base_link">
+    <!-- Visual elements (what you see in RViz) -->
     <visual>
-      <!-- Mounting plate -->
+      <!-- Mounting plate – a thin flat box at the bottom -->
       <origin xyz="0 0 0.005" rpy="0 0 0"/>
       <geometry><box size="0.12 0.12 0.01"/></geometry>
       <material name="dark_grey"/>
     </visual>
     <visual>
-      <!-- Lower cylinder -->
+      <!-- Lower cylinder – the main vertical pillar -->
       <origin xyz="0 0 0.035" rpy="0 0 0"/>
       <geometry><cylinder radius="0.055" length="0.05"/></geometry>
       <material name="steel_grey"/>
     </visual>
     <visual>
-      <!-- Upper bearing housing -->
+      <!-- Upper bearing housing – where the first joint attaches -->
       <origin xyz="0 0 0.075" rpy="0 0 0"/>
       <geometry><cylinder radius="0.045" length="0.03"/></geometry>
       <material name="dark_grey"/>
     </visual>
-    <!-- Collision -->
+    
+    <!-- Collision elements (simplified shape for collision detection) -->
+    <!-- This is used by simulators like Gazebo to check for overlaps. -->
     <collision>
       <origin xyz="0 0 0.045" rpy="0 0 0"/>
       <geometry><cylinder radius="0.060" length="0.090"/></geometry>
     </collision>
-    <!-- Inertia -->
+    
+    <!-- Inertia (mass and moment of inertia) – needed for physics simulation -->
     <xacro:cylinder_inertia m="1.0" r="0.055" h="0.09"/>
   </link>
 
-  <!-- ========================================= -->
-  <!--               LINK 1 (0.4 m, Blue)        -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  LINK 1 (0.4 m, Blue) – first moving arm                         -->
+  <!-- ================================================================ -->
   <link name="link_1">
     <visual>
-      <!-- Main arm beam -->
+      <!-- Main beam – a blue box that extends along the X axis -->
+      <!-- Origin is at the centre of the box, so we shift by L1/2 -->
       <origin xyz="${L1/2} 0 0" rpy="0 0 0"/>
       <geometry><box size="${L1} ${W} ${H}"/></geometry>
       <material name="blue"/>
     </visual>
     <visual>
-      <!-- Proximal joint disk -->
+      <!-- Proximal joint disk – decorative cylinder at the start of the link -->
       <origin xyz="0 0 0" rpy="0 ${pi/2} 0"/>
       <geometry><cylinder radius="0.028" length="0.015"/></geometry>
       <material name="dark_grey"/>
     </visual>
     <visual>
-      <!-- Distal joint disk -->
+      <!-- Distal joint disk – decorative cylinder at the end of the link -->
       <origin xyz="${L1} 0 0" rpy="0 ${pi/2} 0"/>
       <geometry><cylinder radius="0.024" length="0.015"/></geometry>
       <material name="dark_grey"/>
     </visual>
-    <!-- Collision -->
+    
     <collision>
+      <!-- Collision shape same as the main beam -->
       <origin xyz="${L1/2} 0 0" rpy="0 0 0"/>
       <geometry><box size="${L1} ${W} ${H}"/></geometry>
     </collision>
+    
+    <!-- Inertia using the box macro (mass = 0.5 kg) -->
     <xacro:box_inertia m="${mass_link1}" x="${L1}" y="${W}" z="${H}"/>
   </link>
 
-  <!-- ========================================= -->
-  <!--               LINK 2 (0.3 m, Green)       -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  LINK 2 (0.3 m, Green) – second moving arm                       -->
+  <!-- ================================================================ -->
   <link name="link_2">
+    <!-- Same structure as link_1, but shorter and green -->
     <visual>
-      <!-- Main arm beam -->
       <origin xyz="${L2/2} 0 0" rpy="0 0 0"/>
       <geometry><box size="${L2} ${W} ${H}"/></geometry>
       <material name="green"/>
     </visual>
     <visual>
-      <!-- Proximal joint disk -->
       <origin xyz="0 0 0" rpy="0 ${pi/2} 0"/>
       <geometry><cylinder radius="0.024" length="0.015"/></geometry>
       <material name="dark_grey"/>
     </visual>
     <visual>
-      <!-- Distal joint disk -->
       <origin xyz="${L2} 0 0" rpy="0 ${pi/2} 0"/>
       <geometry><cylinder radius="0.020" length="0.015"/></geometry>
       <material name="dark_grey"/>
     </visual>
-    <!-- Collision -->
     <collision>
       <origin xyz="${L2/2} 0 0" rpy="0 0 0"/>
       <geometry><box size="${L2} ${W} ${H}"/></geometry>
@@ -136,23 +172,22 @@
     <xacro:box_inertia m="${mass_link2}" x="${L2}" y="${W}" z="${H}"/>
   </link>
 
-  <!-- ========================================= -->
-  <!--               LINK 3 (0.2 m, Red)         -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  LINK 3 (0.2 m, Red) – third moving arm                          -->
+  <!-- ================================================================ -->
   <link name="link_3">
+    <!-- Shortest link, red -->
     <visual>
-      <!-- Main arm beam -->
       <origin xyz="${L3/2} 0 0" rpy="0 0 0"/>
       <geometry><box size="${L3} ${W} ${H}"/></geometry>
       <material name="red"/>
     </visual>
     <visual>
-      <!-- Proximal joint disk -->
+      <!-- Only a proximal disk (the distal end attaches to gripper) -->
       <origin xyz="0 0 0" rpy="0 ${pi/2} 0"/>
       <geometry><cylinder radius="0.020" length="0.015"/></geometry>
       <material name="dark_grey"/>
     </visual>
-    <!-- Collision -->
     <collision>
       <origin xyz="${L3/2} 0 0" rpy="0 0 0"/>
       <geometry><box size="${L3} ${W} ${H}"/></geometry>
@@ -160,11 +195,12 @@
     <xacro:box_inertia m="${mass_link3}" x="${L3}" y="${W}" z="${H}"/>
   </link>
 
-  <!-- ========================================= -->
-  <!--        GRIPPER BASE LINK                  -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  GRIPPER BASE LINK – the wrist housing                           -->
+  <!-- ================================================================ -->
   <link name="gripper_base">
     <visual>
+      <!-- A small grey box representing the gripper body -->
       <origin xyz="0.015 0 0" rpy="0 0 0"/>
       <geometry><box size="0.03 0.04 0.03"/></geometry>
       <material name="dark_grey"/>
@@ -176,17 +212,18 @@
     <xacro:box_inertia m="0.05" x="0.03" y="0.04" z="0.03"/>
   </link>
 
-  <!-- ========================================= -->
-  <!--        GRIPPER FINGER LEFT                -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  GRIPPER FINGER LEFT – left movable finger                       -->
+  <!-- ================================================================ -->
   <link name="gripper_finger_left">
     <visual>
+      <!-- Main finger body -->
       <origin xyz="0.02 0 0" rpy="0 0 0"/>
       <geometry><box size="0.04 0.008 0.025"/></geometry>
       <material name="orange"/>
     </visual>
     <visual>
-      <!-- Fingertip pad -->
+      <!-- Black fingertip pad for better visual -->
       <origin xyz="0.04 0 0" rpy="0 0 0"/>
       <geometry><box size="0.008 0.012 0.025"/></geometry>
       <material name="black"/>
@@ -198,17 +235,17 @@
     <xacro:box_inertia m="0.02" x="0.04" y="0.008" z="0.025"/>
   </link>
 
-  <!-- ========================================= -->
-  <!--        GRIPPER FINGER RIGHT               -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  GRIPPER FINGER RIGHT – right movable finger                     -->
+  <!-- ================================================================ -->
   <link name="gripper_finger_right">
+    <!-- Same as left finger, but placed on the opposite side -->
     <visual>
       <origin xyz="0.02 0 0" rpy="0 0 0"/>
       <geometry><box size="0.04 0.008 0.025"/></geometry>
       <material name="orange"/>
     </visual>
     <visual>
-      <!-- Fingertip pad -->
       <origin xyz="0.04 0 0" rpy="0 0 0"/>
       <geometry><box size="0.008 0.012 0.025"/></geometry>
       <material name="black"/>
@@ -220,9 +257,13 @@
     <xacro:box_inertia m="0.02" x="0.04" y="0.008" z="0.025"/>
   </link>
 
-  <!-- ========================================= -->
-  <!--        END EFFECTOR FRAME (virtual)       -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  END EFFECTOR FRAME – virtual marker for the tool tip            -->
+  <!-- ================================================================ -->
+  <!-- This is not a physical part; it's just a small sphere that helps -->
+  <!-- visualise the exact point where the gripper would pick an object. -->
+  <!-- Our FK node also broadcasts a separate "computed_end_effector"   -->
+  <!-- frame that coincides with this point.                            -->
   <link name="end_effector">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -231,76 +272,85 @@
     </visual>
   </link>
 
-  <!-- ========================================= -->
-  <!--                  JOINTS                   -->
-  <!-- ========================================= -->
+  <!-- ================================================================ -->
+  <!--  JOINTS – how links are connected                                -->
+  <!-- ================================================================ -->
 
-  <!-- Joint 1: base → link_1 -->
+  <!-- JOINT 1 – revolute (rotating) joint from base_link to link_1     -->
+  <!-- Axis is Z (up), so the arm rotates in the horizontal (XY) plane. -->
   <joint name="joint_1" type="revolute">
     <parent link="base_link"/>
     <child  link="link_1"/>
+    <!-- Position the joint at the top of base_link (0,0,0.09) -->
     <origin xyz="0 0 0.090" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
-    <!-- <limit lower="${-joint_lim}" upper="${joint_lim}" effort="20.0" velocity="2.0"/>
-     -->
+    <axis xyz="0 0 1"/>   <!-- rotation around Z -->
+    <!-- Limits: from -2.967 rad (-170°) to +2.967 rad (+170°) -->
     <limit lower="-2.967" upper="2.967" effort="20.0" velocity="2.0"/>
     <dynamics damping="0.5" friction="0.1"/>
   </joint>
 
-  <!-- Joint 2: link_1 → link_2 -->
+  <!-- JOINT 2 – revolute from link_1 to link_2                         -->
+  <!-- Attached at the end of link_1 (x = L1)                           -->
   <joint name="joint_2" type="revolute">
     <parent link="link_1"/>
     <child  link="link_2"/>
     <origin xyz="${L1} 0 0" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
-    <!-- <limit lower="${-joint_lim}" upper="${joint_lim}" effort="15.0" velocity="2.0"/> -->
     <limit lower="-2.268" upper="2.268" effort="15.0" velocity="2.0"/>
     <dynamics damping="0.4" friction="0.1"/>
   </joint>
 
-  <!-- Joint 3: link_2 → link_3 -->
+  <!-- JOINT 3 – revolute from link_2 to link_3                         -->
   <joint name="joint_3" type="revolute">
     <parent link="link_2"/>
     <child  link="link_3"/>
     <origin xyz="${L2} 0 0" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
-    <!-- <limit lower="${-joint_lim}" upper="${joint_lim}" effort="10.0" velocity="2.0"/> -->
     <limit lower="-1.919" upper="1.919" effort="10.0" velocity="2.0"/>
     <dynamics damping="0.3" friction="0.05"/>
   </joint>
 
-  <!-- Fixed joint: link_3 → gripper_base -->
+  <!-- FIXED JOINT: link_3 → gripper_base                                -->
+  <!-- No movement; the gripper base is rigidly attached to link_3.     -->
   <joint name="gripper_base_joint" type="fixed">
     <parent link="link_3"/>
     <child  link="gripper_base"/>
     <origin xyz="${L3} 0 0" rpy="0 0 0"/>
   </joint>
 
-  <!-- Prismatic joint: gripper_base → finger_left -->
+  <!-- PRISMATIC JOINT: gripper_base → left finger                       -->
+  <!-- This joint slides along Y axis, allowing the finger to open/close. -->
   <joint name="gripper_finger_left_joint" type="prismatic">
     <parent link="gripper_base"/>
     <child  link="gripper_finger_left"/>
+    <!-- Start position: offset in +Y direction -->
     <origin xyz="0 0.016 0" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 1 0"/>   <!-- slide along Y -->
     <limit lower="0.0" upper="0.025" effort="5.0" velocity="0.1"/>
     <dynamics damping="0.1" friction="0.05"/>
   </joint>
 
-  <!-- Prismatic joint: gripper_base → finger_right (mimic left) -->
+  <!-- PRISMATIC JOINT: gripper_base → right finger                      -->
+  <!-- This finger mimics the left one: when left moves, right moves    -->
+  <!-- equally in the opposite direction (because its axis is Y but the -->
+  <!-- initial offset is negative). The <mimic> tag makes it follow.    -->
   <joint name="gripper_finger_right_joint" type="prismatic">
     <parent link="gripper_base"/>
     <child  link="gripper_finger_right"/>
-    <origin xyz="0 -0.016 0" rpy="0 0 ${pi}"/>
+    <origin xyz="0 -0.016 0" rpy="0 0 ${pi}"/>  <!-- flipped 180° around Z -->
     <axis xyz="0 1 0"/>
     <limit lower="0.0" upper="0.025" effort="5.0" velocity="0.1"/>
     <dynamics damping="0.1" friction="0.05"/>
+    <!-- Mimic the left joint: same displacement (multiplier=1) -->
     <mimic joint="gripper_finger_left_joint" multiplier="1" offset="0"/>
   </joint>
 
-  <!-- Fixed joint: gripper_base → end_effector -->
+  <!-- FIXED JOINT: gripper_base → end_effector (virtual marker)         -->
+  <!-- This places the yellow sphere at the tip of the gripper.         -->
   <joint name="ee_fixed" type="fixed">
     <parent link="gripper_base"/>
     <child  link="end_effector"/>
+    <!-- Positioned 0.045 m forward from gripper_base's origin -->
     <origin xyz="0.045 0 0" rpy="0 0 0"/>
   </joint>
 
